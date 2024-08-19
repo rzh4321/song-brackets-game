@@ -1,6 +1,6 @@
-import Game from "@/components/Game";
 import { getServerSession } from "next-auth";
 import authOptions from "@/authOptions";
+import GameWrapper from "@/components/GameWrapper";
 
 export default async function Page({
   params,
@@ -10,5 +10,6 @@ export default async function Page({
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { userId: number }).userId;
   const playlistId = params.playlistId;
-  return <Game playlistId={playlistId} userId={userId} />;
+
+  return <GameWrapper playlistId={playlistId} userId={userId} />;
 }

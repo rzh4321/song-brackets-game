@@ -2,9 +2,21 @@ import { useQuery } from "@tanstack/react-query";
 import getAccessToken from "@/actions/getAccessToken";
 import refreshAccessToken from "@/actions/refreshAccessToken";
 import getPreviewUrl from "@/actions/getPreviewUrl";
-import type { Track, Song, PlaylistInfo } from "@/types";
+import type {
+  Track,
+  Song,
+  PlaylistInfo,
+  participantsType,
+  SongWithStatsType,
+} from "@/types";
+import getSongDBData from "@/actions/getSongDBData";
 
-async function fetchNextSongs(url: string, accessToken: string) {
+async function fetchNextSongs(
+  url: string,
+  playlistId: string,
+  accessToken: string,
+  playlistName: string,
+) {
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -21,6 +33,20 @@ async function fetchNextSongs(url: string, accessToken: string) {
     if (!previewUrl) {
       previewUrl = await getPreviewUrl(track.track.id);
     }
+    // get the song's stats from the DB
+    const DBStats = (await getSongDBData(
+      track.track.id,
+      playlistId,
+      track.track.name,
+      playlistName,
+    )) as {
+      playlistId: string;
+      gamesPlayed: number;
+      gamesWon: number;
+      totalScore: number;
+      totalRounds: number;
+      totalBracketSize: number;
+    };
     return {
       id: track.track.id,
       name: track.track.name,
@@ -30,8 +56,9 @@ async function fetchNextSongs(url: string, accessToken: string) {
       artists: track.track.artists.map((artist) => artist.name),
       duration: track.track.duration_ms,
       popularity: track.track.popularity,
-      image: track.track.album.images[0],
-    };
+      image: track.track.album.images[0].url,
+      ...DBStats,
+    } as SongWithStatsType;
   });
   return { nextPromises: promises, url: data.next };
 }
@@ -39,7 +66,7 @@ async function fetchNextSongs(url: string, accessToken: string) {
 async function fetchPlaylistData(
   playlistId: string,
   accessToken: string,
-): Promise<{ songsArr: Song[]; playlistInfo: PlaylistInfo }> {
+): Promise<{ songsArr: SongWithStatsType[]; playlistInfo: PlaylistInfo }> {
   const response = await fetch(
     `https://api.spotify.com/v1/playlists/${playlistId}`,
     {
@@ -71,6 +98,20 @@ async function fetchPlaylistData(
       if (!previewUrl) {
         previewUrl = await getPreviewUrl(track.track.id);
       }
+      // get the song's stats from the DB
+      const DBStats = (await getSongDBData(
+        track.track.id,
+        playlistId,
+        track.track.name,
+        playlistInfo.name,
+      )) as {
+        playlistId: string;
+        gamesPlayed: number;
+        gamesWon: number;
+        totalScore: number;
+        totalRounds: number;
+        totalBracketSize: number;
+      };
       return {
         id: track.track.id,
         name: track.track.name,
@@ -80,13 +121,19 @@ async function fetchPlaylistData(
         artists: track.track.artists.map((artist) => artist.name),
         duration: track.track.duration_ms,
         popularity: track.track.popularity,
-        image: track.track.album.images[0],
-      };
+        image: track.track.album.images[0].url,
+        ...DBStats,
+      } as SongWithStatsType;
     }
   });
   let nextUrl = data.tracks.next;
   while (nextUrl) {
-    let { nextPromises, url } = await fetchNextSongs(nextUrl, accessToken);
+    let { nextPromises, url } = await fetchNextSongs(
+      nextUrl,
+      playlistId,
+      accessToken,
+      playlistInfo.name,
+    );
     promises = [...promises, ...nextPromises];
     nextUrl = url;
   }

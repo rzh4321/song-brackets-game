@@ -1,22 +1,20 @@
 "use server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { db } from "@/db";
+import { users } from "@/schema";
+import { eq } from "drizzle-orm";
 
 export default async function getSpotifyUserId(
   username: string,
-): Promise<string | undefined> {
-  if (!username) return undefined;
+): Promise<string | null> {
+  if (!username) return null;
   // Retrieve the user with the given username
-  const user = await prisma.user.findUnique({
-    where: {
-      username: username,
-    },
-    select: {
-      spotifyUserId: true, // Only select the spotifyUserId field
-    },
-  });
+  const res = await db
+    .select({
+      spotifyUserId: users.spotifyId,
+    })
+    .from(users)
+    .where(eq(username as any, users.username));
 
   // If the user exists, return the spotifyUserId, else return null
-  return user?.spotifyUserId ?? undefined;
+  return res.length > 0 ? res[0].spotifyUserId : null;
 }

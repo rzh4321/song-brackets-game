@@ -1,5 +1,33 @@
 import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 
+export type currentRoundBracketType = {
+  bracket: number;
+  part1: participantsType;
+  part2: participantsType;
+};
+
+export type resultBracketType = {
+  round: number;
+  bracket: number;
+  part1: participantsType;
+  part2: participantsType;
+  nextRound: number | null;
+  nextBracket: number | null;
+  winner: string;
+};
+
+export type SongWithStatsType = Song & {
+  rating: number;
+  playlistId: string;
+  gamesPlayed: number;
+  totalScore: number;
+  gamesWon: number;
+  totalRounds: number;
+  totalBracketSize: number;
+};
+
+export type participantsType = SongWithStatsType & { cameFromBracket: number };
+
 export type Song = {
   id: string;
   url: string;
@@ -17,6 +45,29 @@ export type SimplifiedPlaylistObject = {
   name: string;
   playlistId: string;
   image: string | null;
+};
+
+export type ParticipantType = {
+  id: string;
+  resultText: string | null;
+  isWinner: boolean;
+  status: string | null;
+  name: string;
+  picture: string;
+};
+
+export type HeartStyle = {
+  id: number;
+  style: React.CSSProperties;
+};
+
+export type MatchType = {
+  id: number;
+  nextMatchId: number | null;
+  tournamentRoundText: string;
+  startTime: string;
+  state: "PLAYED" | "SCHEDULED" | "RUNNING" | "SCORE_DONE";
+  participants: ParticipantType[];
 };
 
 export type PlaylistInfo = {

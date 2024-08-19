@@ -1,16 +1,17 @@
 "use server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { db } from "@/db";
+import { users } from "@/schema";
+import { eq } from "drizzle-orm";
 
 export default async function getName(
   username: string,
-): Promise<string | undefined> {
-  const user = await prisma.user.findFirst({
-    where: {
-      username,
-    },
-  });
+): Promise<string | null> {
+  const res = await db
+    .select({
+      name: users.name,
+    })
+    .from(users)
+    .where(eq(username as any, users.username));
 
-  return user?.name;
+  return res.length > 0 ? res[0].name : null;
 }

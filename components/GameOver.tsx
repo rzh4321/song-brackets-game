@@ -1,68 +1,152 @@
+import Bracket from "@/components/Bracket";
+import Image from "next/image";
+import type { resultBracketType, participantsType } from "@/types";
+import { Heart } from "lucide-react";
+import { useEffect, useState } from "react";
+import updateSongData from "@/actions/updateSongData";
+import { ArrowRight, Loader } from "lucide-react";
+import { useRef } from "react";
 import { Button } from "./ui/button";
-import Link from "next/link";
-import { useEffect } from "react";
-import useStore from "@/gameStore";
 
 type GameOverProps = {
-  updateDatabase: () => Promise<void>;
-  correct: string;
-  selected: string;
-  beatHighScore: boolean;
-  setShowMenu: React.Dispatch<React.SetStateAction<boolean>>;
+  playAgain: () => void;
+  fullBracketResults: resultBracketType[];
+  winner: participantsType;
+  numRounds: number;
+  ranked: boolean;
+};
+
+type RatingsProp = {
+  oldSongRating: number;
+  newSongRating: number;
 };
 
 export default function GameOver({
-  updateDatabase,
-  correct,
-  selected,
-  beatHighScore,
-  setShowMenu,
+  playAgain,
+  fullBracketResults,
+  winner,
+  numRounds,
+  ranked,
 }: GameOverProps) {
-  const score = useStore((state) => state.score);
-  const setScore = useStore((state) => state.setScore);
+  const [ratings, setRatings] = useState<RatingsProp>();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // play the winning song on mount
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.play().catch((error) => {
+        console.error("Audio playback failed:", error);
+        // Handle the error (e.g., show a play button to the user)
+      });
+    }
+  }, [winner]);
 
   useEffect(() => {
-    async function update() {
-      await updateDatabase();
+    const updateDb = async () => {
+      for (let i = 0; i < fullBracketResults.length; ++i) {
+        const bracketResultObj: any = fullBracketResults[i];
+        const winnerName = bracketResultObj.winner;
+        // update the loser of each bracket
+        if (bracketResultObj.part1.name === winnerName) {
+          await updateSongData(
+            bracketResultObj.part2.id,
+            bracketResultObj.round,
+            numRounds,
+            bracketResultObj.part2.name,
+            false,
+          );
+          if (i === fullBracketResults.length - 1) {
+            // special case for winner of entire bracket
+            const { oldSongRating, newSongRating } = await updateSongData(
+              bracketResultObj.part1.id,
+              bracketResultObj.round + 1,
+              numRounds,
+              bracketResultObj.winner,
+              true,
+            );
+            setRatings({
+              oldSongRating,
+              newSongRating,
+            });
+          }
+        } else {
+          await updateSongData(
+            bracketResultObj.part1.id,
+            bracketResultObj.round,
+            numRounds,
+            bracketResultObj.part1.name,
+            false,
+          );
+          if (i === fullBracketResults.length - 1) {
+            // special case for winner of entire bracket
+            const { oldSongRating, newSongRating } = await updateSongData(
+              bracketResultObj.part2.id,
+              bracketResultObj.round + 1,
+              numRounds,
+              bracketResultObj.winner,
+              true,
+            );
+            setRatings({
+              oldSongRating,
+              newSongRating,
+            });
+          }
+        }
+      }
+    };
+    if (ranked) {
+      console.log("THE MODE WAS RANKED, UPDATING DB NOW...");
+      updateDb();
     }
-    update();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // make sure its only run once to avoid updating db multiple times
-
-  const handlePlayAgain = () => {
-    setShowMenu(true); // take user back to menu page
-    setScore(null); // reset score to null to ensure you get a new song if you play again
-  };
+  }, []);
 
   return (
-    <div className="flex flex-col gap-10">
-      <div className="flex flex-col items-center justify-center gap-5">
-        <span>
-          The song was <span className="text-green-400">{correct}</span>{" "}
-          {selected &&
-            `and you
-          chose `}
-          {selected && <span className="text-red-400">{selected}</span>}
-        </span>
-        <div>
-          <div className="text-center text-3xl">
-            {Math.max(score as number, 0)}
-          </div>
-          {beatHighScore && (
-            <span className="text-xs bg-green-600 rounded text-black p-1">
-              NEW BEST
-            </span>
+    <div className="flex flex-col gap-3 items-center">
+      <audio ref={audioRef} src={winner.url} autoPlay loop></audio>
+      <div className="flex flex-col gap-2 font-bold items-center">
+        <span className="text-xl tracking-widest">THE WINNER IS...</span>
+        <span
+          className={`text-4xl font-extrabold animate-bounce text-center text-pink-500 shadow-xl bg-yellow-400 rounded p-1`}
+        >
+          {ranked && !ratings ? (
+            <Loader className="animate-spin" />
+          ) : (
+            winner.name
           )}
+        </span>
+        {ranked && ratings && (
+          <div className="flex flex-col gap-1">
+            <span className="text-yellow-300">
+              Song Rating: {Math.round(ratings.oldSongRating * 10) / 10}
+              <ArrowRight className="inline mx-1" />
+              {Math.round(ratings!.newSongRating * 10) / 10}
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="w-[100vw]">
+        <div className=" relative flex justify-center items-center h-full w-full">
+          <Heart
+            fill="red"
+            stroke="pink"
+            className="z-[-1] animate-heartPulse lg:w-[40rem] lg:h-[40rem] md:w-[30rem] md:h-[30rem] sm:w-[25rem] sm:h-[25rem] h-[15rem] w-[15rem] absolute transform -translate-x-1/2"
+            height={200}
+            width={200}
+          />
+
+          <Image
+            alt="img"
+            className="cursor-pointer w-full min-w-[300px] h-full max-w-[30vw] max-h-[85vh] object-contain"
+            priority
+            src={winner.image}
+            height={2000}
+            width={2000}
+          />
         </div>
       </div>
-      <div className="flex gap-3 justify-center">
-        <Button className="bg-green-400" onClick={() => handlePlayAgain()}>
-          Play again
-        </Button>
-        <Link href="/home">
-          <Button className="bg-red-400">Back to playlists</Button>
-        </Link>
-      </div>
+      <Button onClick={playAgain}>Play again</Button>
+      <Bracket fullBracketResults={fullBracketResults} />
     </div>
   );
 }

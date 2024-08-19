@@ -6,9 +6,9 @@ import { NextAuthOptions } from "next-auth";
 import createUser from "./actions/createUser";
 import { LoginSchema } from "./schemas";
 import bcrypt from "bcryptjs";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { db } from "./db";
+import { users } from "@/schema";
+import { eq } from "drizzle-orm";
 
 const authOptions: NextAuthOptions = {
   pages: {
@@ -38,25 +38,27 @@ const authOptions: NextAuthOptions = {
           // authenticate the user
           const { username, password } = validatedFields.data;
           try {
+            const res = await db
+              .select({
+                username: users.username,
+                password: users.password,
+              })
+              .from(users)
+              .where(eq(username as any, users.username));
             // Search for the user by username
-            const user = await prisma.user.findUnique({
-              where: {
-                username,
-              },
-            });
 
             // If user is not found or it was registered via spotify login, throw an error
-            if (!user || !user.password) {
+            if (res.length === 0 || !res[0].password) {
               throw new Error("Username does not exist");
             }
             // Compare provided password with the hashed password in the database
-            const match = await bcrypt.compare(password, user.password);
+            const match = await bcrypt.compare(password, res[0].password);
 
             // If passwords do not match, throw an error
             if (!match) {
               throw new Error("Passwords not matching");
             }
-            return user;
+            return res[0];
           } catch (error) {
             console.error("Authentication error:", error);
             throw error;

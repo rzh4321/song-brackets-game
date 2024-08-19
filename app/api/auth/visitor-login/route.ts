@@ -1,9 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/db";
+import { users } from "@/schema";
+import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 import bcrypt from "bcryptjs";
-const prisma = new PrismaClient();
 
 // function to generate random usernames
 function generateRandomUsername() {
@@ -23,17 +24,17 @@ function generateRandomUsername() {
 // saves visitor data into db and returns user object
 export const POST = async (req: NextRequest) => {
   const { spotifyUserId } = await req.json();
+  console.log("spotifyuserid is ", spotifyUserId);
   const username = generateRandomUsername();
   const hashedPassword = bcrypt.hashSync(username, 10);
   try {
-    const newUser = await prisma.user.create({
-      data: {
-        username,
-        name: username,
-        spotifyUserId: spotifyUserId ?? null, // If spotifyUserId is not provided, this will be set to null
-        password: hashedPassword,
-      },
+    const res = await db.insert(users).values({
+      username,
+      name: username,
+      spotifyId: spotifyUserId ? spotifyUserId : null,
+      password: hashedPassword,
     });
+
     cookies().set("visitor", username, {
       maxAge: 31536000,
       secure: true,
@@ -41,7 +42,9 @@ export const POST = async (req: NextRequest) => {
     });
     const body = JSON.stringify({
       message: "logged in",
-      user: newUser,
+      user: {
+        username: username,
+      },
     });
     return new NextResponse(body);
   } catch (err) {
