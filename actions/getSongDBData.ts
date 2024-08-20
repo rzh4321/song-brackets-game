@@ -2,7 +2,7 @@
 import { db } from "@/db";
 import { songs, playlists } from "@/schema";
 import { eq } from "drizzle-orm";
-import type { SongWithStatsType } from "@/types";
+import type { SongDBStats } from "@/types";
 
 export default async function getSongDBData(
   trackId: string,
@@ -34,6 +34,8 @@ export default async function getSongDBData(
       totalScore: songs.totalScore,
       totalRounds: songs.totalRounds,
       totalBracketSize: songs.totalBracketSize,
+      rating: songs.rating,
+      name: songs.name,
     })
     .from(songs)
     .where(eq(trackId as any, songs.trackId));
@@ -51,6 +53,7 @@ export default async function getSongDBData(
       totalRounds: 0,
       totalScore: 0,
       name: songName,
+      rating: 65,
     });
     return {
       id: trackId,
@@ -60,7 +63,18 @@ export default async function getSongDBData(
       totalBracketSize: 0,
       totalRounds: 0,
       totalScore: 0,
+      rating: 65,
+      name: songName,
+      winRate: 0,
     };
   }
-  return res[0];
+
+  const resWithWR = {
+    ...res[0],
+    winRate:
+      res[0].gamesPlayed === 0
+        ? 0
+        : (((res[0].gamesWon as number) / res[0].gamesPlayed!) as number),
+  };
+  return resWithWR as SongDBStats;
 }

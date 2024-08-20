@@ -10,9 +10,8 @@ import { Button } from "./ui/button";
 import { Loader } from "lucide-react";
 
 type MenuProps = {
-  playlistInfo: PlaylistInfo | undefined;
-  songs: Song[] | undefined;
-  userId: number;
+  playlistInfo: PlaylistInfo;
+  songs: Song[];
   setShowTournament: React.Dispatch<React.SetStateAction<boolean>>;
   form: any;
 };
@@ -20,7 +19,6 @@ type MenuProps = {
 export default function Menu({
   playlistInfo,
   songs,
-  userId,
   setShowTournament,
   form,
 }: MenuProps) {
@@ -57,10 +55,11 @@ export default function Menu({
             </div>
           </div>
           <div className="flex gap-2 items-center">
-            {/* <Leaderboard
-              playlistId={playlistInfo?.playlistId}
+            <Leaderboard
               name={playlistInfo?.name}
-            /> */}
+              songs={songs}
+              playlistInfo={playlistInfo}
+            />
             <MenuOptions
               playlistInfo={playlistInfo}
               setShowTournament={setShowTournament}

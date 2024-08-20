@@ -1,198 +1,213 @@
-import getTopScoresByPlaylistIdAndTimer from "@/actions/getTopScoresByPlaylistIdAndTimer";
-import getUserTopScoreAndPosition from "@/actions/getUserTopScoreAndPosition";
-import { useState, useEffect } from "react";
-import { FlipHorizontal, Loader } from "lucide-react";
-import type { ScoreEntry, HighestScoreAndPosition } from "@/types";
-import { v4 as uuidv4 } from "uuid";
+"use client";
 
+import * as React from "react";
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { ArrowUpDown, ChevronDown, Loader, MoreHorizontal } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PlaylistInfo, Song } from "@/types";
+import useSongDBStats from "@/hooks/useSongDBStats";
+import type { SongDBStats } from "@/types";
+
+export const columns: ColumnDef<SongDBStats>[] = [
+  {
+    accessorKey: "name",
+    header: "Song",
+    cell: ({ row }) => <div>{row.getValue("name")}</div>,
+  },
+  {
+    accessorKey: "rating",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Rating
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <div className="text-center">{row.getValue("rating")}</div>
+    ),
+  },
+  {
+    accessorKey: "winRate",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Win Rate
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const { gamesWon, gamesPlayed, winRate } = row.original;
+
+      return (
+        <div className="text-center">
+          {gamesWon}/{gamesPlayed} ({winRate.toFixed(0)}%)
+        </div>
+      );
+    },
+  },
+];
 
 type TopScoresTableProps = {
-  playlistId: string | undefined;
-  timer: number;
-  userId: number;
+  songs: Song[];
+  playlistInfo: PlaylistInfo;
 };
 
-function formatDateString(dateString: string): string {
-  const months: { [key: string]: number } = {
-    Jan: 1,
-    Feb: 2,
-    Mar: 3,
-    Apr: 4,
-    May: 5,
-    Jun: 6,
-    Jul: 7,
-    Aug: 8,
-    Sep: 9,
-    Oct: 10,
-    Nov: 11,
-    Dec: 12,
-  };
-  const [dayOfWeek, month, day, year] = dateString.split(" ");
-  const monthNumber = months[month];
-  const shortYear = year.slice(2);
-
-  // Format the date string as "M/D/YY"
-  return `${monthNumber}/${day}/${shortYear}`;
-}
-
 export default function TopScoresTable({
-  playlistId,
-  timer,
-  userId,
+  songs,
+  playlistInfo,
 }: TopScoresTableProps) {
-  const [showHintsLeaderboard, setShowHintsLeaderboard] = useState(false);
-  const [topHints, setTopHints] = useState<ScoreEntry[]>([]);
-  const [topNoHints, setTopNoHints] = useState<ScoreEntry[]>([]);
-  const [userTopScoreHints, setUserTopScoreHints] =
-    useState<HighestScoreAndPosition | null>(null);
-  const [userTopScoreNoHints, setUserTopScoreNoHints] =
-    useState<HighestScoreAndPosition | null>(null);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    async function getTopScores() {
-      const data = await getTopScoresByPlaylistIdAndTimer(playlistId, timer);
-      if (data) {
-        const { topScoresWithHints, topScoresWithoutHints } = data;
-        setTopHints(topScoresWithHints);
-        setTopNoHints(topScoresWithoutHints);
-      }
-      const userScoreNoHints = await getUserTopScoreAndPosition(
-        playlistId,
-        timer,
-        userId,
-        false,
-      );
-      setUserTopScoreNoHints(userScoreNoHints);
-      const userScoreHints = await getUserTopScoreAndPosition(
-        playlistId,
-        timer,
-        userId,
-        true,
-      );
-      setUserTopScoreHints(userScoreHints);
-      // user top scores are either null (never played) or an object
-      setLoading(false);
-    }
-    if (playlistId) getTopScores();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playlistId]);
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "rating", desc: true },
+  ]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const { songsWithStats, loading } = useSongDBStats(
+    playlistInfo.name,
+    playlistInfo.playlistId,
+    songs,
+  );
 
-  if (loading)
+  const table = useReactTable<SongDBStats>({
+    data: songsWithStats,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+    },
+  });
+
+  if (loading) {
     return (
-      <div className="flex items-center justify-center">
-        <Loader className="animate-spin" />
+      <div className="flex justify-center items-center">
+        <Loader className="animate-spin my-5" />
       </div>
     );
+  }
 
   return (
-    <div className="flex flex-col mb-2">
-      <div className="relative flex items-center justify-center">
-        <TableCaption className="text-xs">{`Top Scores ${showHintsLeaderboard ? "w/" : "w/o"} Hints (${timer}s)`}</TableCaption>
-        <FlipHorizontal
-          className="absolute right-0 bottom-0 cursor-pointer"
-          size={20}
-          onClick={() => setShowHintsLeaderboard((prev) => !prev)}
+    <div className="w-full">
+      <div className="flex items-center py-4">
+        <Input
+          placeholder="Search song"
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("name")?.setFilterValue(event.target.value)
+          }
+          className=""
         />
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>#</TableHead>
-            <TableHead className="w-[100px] text-xs">Username</TableHead>
-            <TableHead className="text-xs">Score</TableHead>
-            <TableHead className="text-xs">Date</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {showHintsLeaderboard ? (
-            topHints.length > 0 ? (
-              topHints.map((entry, ind) => (
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
                 <TableRow
-                  key={uuidv4()}
-                  className={entry.id === userId ? "bg-green-700" : ""}
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
                 >
-                  <TableCell className="text-xs">{ind + 1}</TableCell>
-                  <TableCell className="text-xs">{entry.name}</TableCell>
-                  <TableCell className="text-xs">{entry.score}</TableCell>
-                  <TableCell className="text-xs">
-                    {formatDateString(entry.timestamp.toDateString())}
-                  </TableCell>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell className="text-xs" colSpan={4}>
-                  Be the first to play this playlist!
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
                 </TableCell>
               </TableRow>
-            )
-          ) : topNoHints.length > 0 ? (
-            topNoHints.map((entry, ind) => (
-              <TableRow
-                key={uuidv4()}
-                className={entry.id === userId ? "bg-green-700" : ""}
-              >
-                <TableCell className="text-xs">{ind + 1}</TableCell>
-                <TableCell className="text-xs">{entry.name}</TableCell>
-                <TableCell className="text-xs">{entry.score}</TableCell>
-                <TableCell className="text-xs">
-                  {formatDateString(entry.timestamp.toDateString())}
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell className="text-xs" colSpan={4}>
-                Be the first to play this playlist!
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell className="text-xs">
-              {showHintsLeaderboard
-                ? userTopScoreHints
-                  ? userTopScoreHints.position
-                  : "N/A"
-                : userTopScoreNoHints
-                  ? userTopScoreNoHints.position
-                  : "N/A"}
-            </TableCell>
-            <TableCell className="text-xs">You</TableCell>
-            <TableCell className="text-xs">
-              {showHintsLeaderboard
-                ? userTopScoreHints
-                  ? userTopScoreHints.score
-                  : "N/A"
-                : userTopScoreNoHints
-                  ? userTopScoreNoHints.score
-                  : "N/A"}
-            </TableCell>
-            <TableCell className="text-xs">
-              {showHintsLeaderboard
-                ? userTopScoreHints
-                  ? formatDateString(userTopScoreHints.timestamp.toDateString())
-                  : "N/A"
-                : userTopScoreNoHints
-                  ? formatDateString(
-                      userTopScoreNoHints.timestamp.toDateString(),
-                    )
-                  : "N/A"}
-            </TableCell>
-          </TableRow>
-        </TableFooter>
-      </Table>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

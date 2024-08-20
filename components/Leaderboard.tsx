@@ -10,17 +10,18 @@ import {
 
 import { BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { PlaylistInfo, Song } from "@/types";
 
 type LeaderboardProps = {
-  playlistId: string | undefined;
-  userId: number;
   name: string | undefined;
+  playlistInfo: PlaylistInfo;
+  songs: Song[];
 };
 
 export default function Leaderboard({
-  playlistId,
-  userId,
   name,
+  playlistInfo,
+  songs,
 }: LeaderboardProps) {
   return (
     <Dialog>
@@ -37,19 +38,7 @@ export default function Leaderboard({
               Top Scores for {name ?? ""}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col lg:flex-row mt-2 justify-between gap-10">
-            <TopScoresTable playlistId={playlistId} timer={5} userId={userId} />
-            <TopScoresTable
-              playlistId={playlistId}
-              timer={10}
-              userId={userId}
-            />
-            <TopScoresTable
-              playlistId={playlistId}
-              timer={15}
-              userId={userId}
-            />
-          </div>
+          <TopScoresTable songs={songs} playlistInfo={playlistInfo} />
         </div>
       </DialogContent>
     </Dialog>

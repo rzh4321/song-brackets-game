@@ -61,9 +61,8 @@ export default function Game({
       <div className="flex flex-col gap-10 justify-center items-center">
         <Background />
         <Menu
-          userId={userId}
-          playlistInfo={data?.playlistInfo}
-          songs={data?.songsArr}
+          playlistInfo={data.playlistInfo}
+          songs={data.songsArr}
           setShowTournament={setShowTournament}
           form={form}
         />

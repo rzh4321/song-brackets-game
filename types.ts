@@ -16,6 +16,19 @@ export type resultBracketType = {
   winner: string;
 };
 
+export type SongDBStats = {
+  name: string;
+  id: string;
+  playlistId: string;
+  gamesPlayed: number;
+  gamesWon: number;
+  totalBracketSize: number;
+  totalRounds: number;
+  totalScore: number;
+  rating: number;
+  winRate: number;
+};
+
 export type SongWithStatsType = Song & {
   rating: number;
   playlistId: string;
