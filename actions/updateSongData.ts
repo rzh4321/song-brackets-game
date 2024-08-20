@@ -2,14 +2,19 @@
 import { db } from "@/db";
 import { sql, eq } from "drizzle-orm";
 import { songs } from "@/schema";
+import getSongDBData from "./getSongDBData";
 
 export default async function updateSongData(
   trackId: string,
+  playlistId: string,
+  playlistName: string,
   roundReached: number,
   numRounds: number,
   name: string,
   isWinner: boolean,
 ) {
+  // make sure this song and playlist even exists in the DB (this function creates them if not)
+  await getSongDBData(trackId, playlistId, name, playlistName);
   const bracketSize = 2 ** numRounds;
   console.log(
     "IN UPDATEPHOTODATA FOR ",

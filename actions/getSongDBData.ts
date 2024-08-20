@@ -10,7 +10,7 @@ export default async function getSongDBData(
   songName: string,
   playlistName: string,
 ) {
-  console.log("IN GETSONGDBDATA. SONG NAME IS ", songName);
+  // console.log("IN GETSONGDBDATA. SONG NAME IS ", songName);
   let playlistRes = await db
     .select({
       playlistId: playlists.playlistId,
@@ -19,7 +19,7 @@ export default async function getSongDBData(
     .where(eq(playlistId as any, playlists.playlistId));
 
   if (playlistRes.length == 0) {
-    console.log("THIS PLAYLIST DOESNT EXIST YET. CREAETING ONE NOW...");
+    // console.log("THIS PLAYLIST DOESNT EXIST YET. CREAETING ONE NOW...");
     await db.insert(playlists).values({
       playlistId: playlistId,
       name: playlistName,
@@ -38,10 +38,10 @@ export default async function getSongDBData(
     .from(songs)
     .where(eq(trackId as any, songs.trackId));
 
-  console.log("RES IS ", res);
+  // console.log("RES IS ", res);
 
   if (res.length == 0) {
-    console.log("RES IS EMPTY, INSERTING THIS SONG TO DB");
+    // console.log("RES IS EMPTY, INSERTING THIS SONG TO DB");
     await db.insert(songs).values({
       trackId: trackId,
       playlistId: playlistId,

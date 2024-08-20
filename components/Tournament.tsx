@@ -8,17 +8,20 @@ import type {
   resultBracketType,
   Song,
   SongWithStatsType,
+  PlaylistInfo,
 } from "@/types";
 import Image from "next/image";
 import BracketRound from "./BracketRound";
 import GameOver from "./GameOver";
+import Background from "./background";
 
 type TournamentProps = {
   playAgain: () => void;
   numRounds: number;
   showProgress: boolean;
   ranked: boolean;
-  songsArr: SongWithStatsType[];
+  songsArr: Song[];
+  playlistInfo: PlaylistInfo;
 };
 
 export default function Tournament({
@@ -27,6 +30,7 @@ export default function Tournament({
   showProgress,
   ranked,
   songsArr,
+  playlistInfo,
 }: TournamentProps) {
   const {
     currentRoundBrackets,
@@ -39,7 +43,7 @@ export default function Tournament({
     setFullBracketResults,
     round,
     setRound,
-  } = useTournament(numRounds, ranked, songsArr);
+  } = useTournament(numRounds, ranked, songsArr, playlistInfo);
 
   const handlePhotoChosen = async (name: string) => {
     // pause for 1.5 seconds for the animation
@@ -122,6 +126,7 @@ export default function Tournament({
   if (currentRoundBrackets.length === 0) {
     return (
       <div className="text-3xl font-sans tracking-wide text-center">
+        <Background />
         Loading Round
         <span className="dots overflow-hidden align-baseline"></span>
       </div>
@@ -130,6 +135,7 @@ export default function Tournament({
 
   return (
     <>
+      <Background />
       <BracketRound
         bracket={currentRoundBrackets[currentRoundInd]}
         showProgress={showProgress}

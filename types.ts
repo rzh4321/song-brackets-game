@@ -25,8 +25,22 @@ export type SongWithStatsType = Song & {
   totalRounds: number;
   totalBracketSize: number;
 };
+export type ParticipantWithStatsType = participantsType & {
+  rating: number;
+  playlistId: string;
+  gamesPlayed: number;
+  totalScore: number;
+  gamesWon: number;
+  totalRounds: number;
+  totalBracketSize: number;
+};
 
-export type participantsType = SongWithStatsType & { cameFromBracket: number };
+// export type participantsType = SongWithStatsType & { cameFromBracket: number };
+export type participantsType = Song & {
+  cameFromBracket: number;
+  playlistId: string;
+  playlistName: string;
+};
 
 export type Song = {
   id: string;

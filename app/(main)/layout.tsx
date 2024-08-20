@@ -22,7 +22,7 @@ export default function RootLayout({
           <body className="dark font-primary flex flex-col h-screen w-screen justify-between items-center overflow-x-hidden">
             <div className="bg-inherit w-full">
               <NavBar />
-              <div className="p-5">{children}</div>
+              <div className="p-5 z-[1]">{children}</div>
             </div>
             <Toaster />
             {/*

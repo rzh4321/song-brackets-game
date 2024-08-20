@@ -5,6 +5,7 @@ import type {
   resultBracketType,
   Song,
   SongWithStatsType,
+  PlaylistInfo,
 } from "@/types";
 
 function shuffleArray(array: any[], count: number): any[] {
@@ -27,7 +28,8 @@ function shuffleArray(array: any[], count: number): any[] {
 export default function useTournament(
   numRounds: number,
   ranked: boolean,
-  songsArr: SongWithStatsType[],
+  songsArr: Song[],
+  playlistInfo: PlaylistInfo,
 ) {
   const [participants, setParticipants] = useState<participantsType[]>([]);
   const [currentRoundBrackets, setCurrentRoundBrackets] = useState<
@@ -56,9 +58,11 @@ export default function useTournament(
       console.log("SHUFFLING AND TRIMMING PARTS");
       const songs = shuffleArray(songsArr, count);
 
-      const participants = songs.map((song, ind) => ({
+      const participants: participantsType[] = songs.map((song, ind) => ({
         ...song,
         cameFromBracket: ind,
+        playlistId: playlistInfo.playlistId,
+        playlistName: playlistInfo.name,
       }));
       setParticipants(participants);
       console.log(

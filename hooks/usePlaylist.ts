@@ -34,19 +34,19 @@ async function fetchNextSongs(
       previewUrl = await getPreviewUrl(track.track.id);
     }
     // get the song's stats from the DB
-    const DBStats = (await getSongDBData(
-      track.track.id,
-      playlistId,
-      track.track.name,
-      playlistName,
-    )) as {
-      playlistId: string;
-      gamesPlayed: number;
-      gamesWon: number;
-      totalScore: number;
-      totalRounds: number;
-      totalBracketSize: number;
-    };
+    // const DBStats = (await getSongDBData(
+    //   track.track.id,
+    //   playlistId,
+    //   track.track.name,
+    //   playlistName,
+    // )) as {
+    //   playlistId: string;
+    //   gamesPlayed: number;
+    //   gamesWon: number;
+    //   totalScore: number;
+    //   totalRounds: number;
+    //   totalBracketSize: number;
+    // };
     return {
       id: track.track.id,
       name: track.track.name,
@@ -57,8 +57,8 @@ async function fetchNextSongs(
       duration: track.track.duration_ms,
       popularity: track.track.popularity,
       image: track.track.album.images[0].url,
-      ...DBStats,
-    } as SongWithStatsType;
+      // ...DBStats,
+    } as Song;
   });
   return { nextPromises: promises, url: data.next };
 }
@@ -99,19 +99,19 @@ async function fetchPlaylistData(
         previewUrl = await getPreviewUrl(track.track.id);
       }
       // get the song's stats from the DB
-      const DBStats = (await getSongDBData(
-        track.track.id,
-        playlistId,
-        track.track.name,
-        playlistInfo.name,
-      )) as {
-        playlistId: string;
-        gamesPlayed: number;
-        gamesWon: number;
-        totalScore: number;
-        totalRounds: number;
-        totalBracketSize: number;
-      };
+      // const DBStats = (await getSongDBData(
+      //   track.track.id,
+      //   playlistId,
+      //   track.track.name,
+      //   playlistInfo.name,
+      // )) as {
+      //   playlistId: string;
+      //   gamesPlayed: number;
+      //   gamesWon: number;
+      //   totalScore: number;
+      //   totalRounds: number;
+      //   totalBracketSize: number;
+      // };
       return {
         id: track.track.id,
         name: track.track.name,
@@ -122,8 +122,8 @@ async function fetchPlaylistData(
         duration: track.track.duration_ms,
         popularity: track.track.popularity,
         image: track.track.album.images[0].url,
-        ...DBStats,
-      } as SongWithStatsType;
+        // ...DBStats,
+      } as Song;
     }
   });
   let nextUrl = data.tracks.next;

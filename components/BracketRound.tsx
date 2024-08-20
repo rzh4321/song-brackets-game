@@ -23,7 +23,7 @@ export default function BracketRound({
 
   return (
     <>
-      <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:gap-10 max-w-full sm:h-[85vh] items-center">
+      <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:gap-10 max-w-full sm:h-[85vh] justify-center items-center">
         <ImageContainer
           name={bracket.part1.name}
           audio={bracket.part1.url}

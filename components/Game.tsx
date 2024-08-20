@@ -1,15 +1,15 @@
 "use client";
 import { useState } from "react";
 import Tournament from "@/components/Tournament";
-import ErrorMessage from "./ErrorMessage";
 import Menu from "./Menu";
 import { biggestPowerOfTwo } from "./MenuOptions";
+import Background from "./background";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { SongWithStatsType, PlaylistInfo } from "@/types";
+import { PlaylistInfo, Song } from "@/types";
 
 export const FormSchema = z.object({
   bracketSize: z.string(),
@@ -21,7 +21,7 @@ export default function Game({
   data,
   userId,
 }: {
-  data: { songsArr: SongWithStatsType[]; playlistInfo: PlaylistInfo };
+  data: { songsArr: Song[]; playlistInfo: PlaylistInfo };
   userId: number;
 }) {
   const [showTournanment, setShowTournament] = useState(false);
@@ -52,12 +52,14 @@ export default function Game({
         showProgress={form.getValues("showProgress") as boolean}
         ranked={form.getValues("ranked") as boolean}
         songsArr={data!.songsArr}
+        playlistInfo={data!.playlistInfo}
       />
     );
   }
   return (
     <>
       <div className="flex flex-col gap-10 justify-center items-center">
+        <Background />
         <Menu
           userId={userId}
           playlistInfo={data?.playlistInfo}
