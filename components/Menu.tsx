@@ -5,7 +5,7 @@ import MenuOptions from "./MenuOptions";
 import Leaderboard from "./Leaderboard";
 import SongCard from "./SongCard";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "./ui/button";
 import { RefreshCcw } from "lucide-react";
 
@@ -25,15 +25,65 @@ export default function Menu({
   refetch,
 }: MenuProps) {
   const [visibleCount, setVisibleCount] = useState(10);
+  const [playedSongs, setPlayedSongs] = useState<Set<string>>(new Set());
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const showMoreItems = () => {
     setVisibleCount((prevVisibleCount) => prevVisibleCount + 10);
   };
 
+  // Function to get a random unplayed song
+  const getRandomUnplayedSong = useCallback(() => {
+    const unplayedSongs = songs.filter((song) => !playedSongs.has(song.id));
+    if (unplayedSongs.length === 0) {
+      // If all songs have been played, reset the played songs
+      setPlayedSongs(new Set());
+      return songs[Math.floor(Math.random() * songs.length)];
+    }
+    return unplayedSongs[Math.floor(Math.random() * unplayedSongs.length)];
+  }, [songs, playedSongs]);
+
+  // Function to play the next song
+  const playNextSong = useCallback(() => {
+    const playSong = async () => {
+      const nextSong = getRandomUnplayedSong();
+      console.log("NEXT RANDOM SONG IS ", nextSong.name);
+      if (audioRef.current) {
+        // console.log('ATTACHING URL TO AUDIOREF AND PLAYING IT NOW...')
+        audioRef.current.src = nextSong.url;
+        // await audioRef.current.play();
+        // console.log('SHOULD BE PLAYING NOW')
+        setPlayedSongs((prev) => new Set(prev).add(nextSong.id));
+      }
+    };
+    playSong();
+  }, [getRandomUnplayedSong]);
+
+  useEffect(() => {
+    document.body.addEventListener("mousemove", function () {
+      audioRef.current?.play();
+    });
+    if (songs.length > 0 && audioRef.current) {
+      // console.log('THIS SHOULD ONLY RUN ONCE, ON MOUNT')
+      audioRef.current.addEventListener("ended", playNextSong);
+      // console.log('PLAYING FIRST SONG NOW...')
+      playNextSong(); // Start playing when component mounts
+      const prevAudioRef = audioRef;
+      return () => {
+        if (prevAudioRef.current) {
+          prevAudioRef.current.removeEventListener("ended", playNextSong);
+          prevAudioRef.current.pause();
+        }
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Get the songs to display
   const itemsToDisplay = songs?.slice(0, visibleCount);
   return (
     <div className="w-full z-[1]">
+      <audio ref={audioRef} playsInline autoPlay className="hidden" />
       <div className="flex flex-col gap-5">
         <div className="flex justify-between">
           <div className="flex gap-2 items-center mr-4">
