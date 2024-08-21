@@ -4,7 +4,7 @@ import Image from "next/image";
 export default function GameOverBackground({ src }: { src: string }) {
   return (
     <>
-      <div className="wrap z-[-1] fixed h-full w-screen -m-5">
+      <div className="wrap fixed h-full w-screen -m-5">
         {[...Array(8)].map((_, index) => (
           <Image
             key={`img-${index}`}

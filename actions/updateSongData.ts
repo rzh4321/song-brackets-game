@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { sql, eq } from "drizzle-orm";
 import { songs } from "@/schema";
 import getSongDBData from "./getSongDBData";
+import redis from "@/redis";
 
 export default async function updateSongData(
   trackId: string,
@@ -42,6 +43,7 @@ export default async function updateSongData(
   await db.execute(
     sql`UPDATE songs SET total_rounds = total_rounds + ${roundReached}, total_bracket_size = total_bracket_size + ${bracketSize}, total_score = total_score + ${calculatedScore}, games_played = games_played + 1 WHERE track_id = ${trackId}`,
   );
+
   if (isWinner) {
     await db.execute(
       sql`UPDATE songs SET games_won = games_won + 1 WHERE track_id = ${trackId}`,
@@ -62,14 +64,47 @@ export default async function updateSongData(
     WHERE games_played > 0;`,
   );
 
-  const newSongRatingQuery = await db
+  // code below is to update redis
+
+  // Fetch updated song data
+  const updatedSongQuery = await db
     .select({
       rating: songs.rating,
+      gamesPlayed: songs.gamesPlayed,
+      gamesWon: songs.gamesWon,
     })
     .from(songs)
     .where(eq(songs.trackId, trackId));
 
-  const newSongRating = newSongRatingQuery[0].rating as number;
+  const updatedSong = updatedSongQuery[0];
+  const newSongRating = updatedSong.rating as number;
+  const gamesPlayed = updatedSong.gamesPlayed as number;
+  const gamesWon = updatedSong.gamesWon as number;
+
+  // Calculate win rate
+  const winRate = gamesPlayed > 0 ? gamesWon / gamesPlayed : 0;
+
+  // Update Redis cache
+  const redisKey = `playlist-stats:${playlistId}`;
+  const cachedData = await redis.get(redisKey);
+
+  if (cachedData) {
+    console.log("UPDATING EXISTING CACHE...");
+    const parsedData = JSON.parse(cachedData);
+    const songIndex = parsedData.findIndex((song: any) => song.id === trackId);
+
+    if (songIndex !== -1) {
+      parsedData[songIndex] = {
+        ...parsedData[songIndex],
+        rating: newSongRating,
+        winRate,
+        gamesPlayed,
+        gamesWon,
+      };
+
+      await redis.set(redisKey, JSON.stringify(parsedData));
+    }
+  }
 
   console.log("UPDATED DB FOR ", name);
   return { oldSongRating, newSongRating };

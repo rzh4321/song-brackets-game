@@ -13,7 +13,13 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, Loader, MoreHorizontal } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  Loader,
+  MoreHorizontal,
+  RefreshCcw,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -95,7 +101,7 @@ export default function TopScoresTable({
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
-  const { songsWithStats, loading } = useSongDBStats(
+  const { songsWithStats, loading, refreshStats } = useSongDBStats(
     playlistInfo.name,
     playlistInfo.playlistId,
     songs,
@@ -128,7 +134,8 @@ export default function TopScoresTable({
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
+      <div className="flex gap-2 items-center py-4">
+        <RefreshCcw onClick={refreshStats} className="cursor-pointer" />
         <Input
           placeholder="Search song"
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}

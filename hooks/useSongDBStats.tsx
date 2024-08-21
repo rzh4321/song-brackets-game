@@ -1,6 +1,10 @@
 import getSongDBData from "@/actions/getSongDBData";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Song, SongDBStats } from "@/types";
+import {
+  cachePlaylistSongStats,
+  getCachedPlaylistSongStats,
+} from "@/actions/redisActions";
 
 export default function useSongDBStats(
   playlistName: string,
@@ -10,30 +14,50 @@ export default function useSongDBStats(
   const [songsWithStats, setSongsWithStats] = useState<SongDBStats[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // get every song from this playlist and fetch its stats from the DB
-    const fetchStats = async () => {
-      const res: SongDBStats[] = [];
-      for (let i = 0; i < songs.length; ++i) {
-        const song = songs[i];
-        const songWithStats = await getSongDBData(
-          song.id,
-          playlistId,
-          song.name,
-          playlistName,
-        );
-        res.push(songWithStats);
-      }
-      setSongsWithStats(res);
-    };
-    fetchStats();
+  const fetchStatsFromDB = useCallback(async () => {
+    setLoading(true);
+    const res: SongDBStats[] = [];
+    for (let i = 0; i < songs.length; ++i) {
+      const song = songs[i];
+      const songWithStats = await getSongDBData(
+        song.id,
+        playlistId,
+        song.name,
+        playlistName,
+      );
+      res.push(songWithStats);
+    }
+    // cache leaderboard
+    cachePlaylistSongStats(playlistId, res);
+    setSongsWithStats(res);
+    setLoading(false);
   }, [playlistName, playlistId, songs]);
 
-  useEffect(() => {
-    if (songsWithStats?.length > 0) {
-      setLoading(false);
-    }
-  }, [songsWithStats]);
+  const fetchStats = useCallback(
+    async (bypassCache: boolean = false) => {
+      if (!bypassCache) {
+        console.log("CHECKING CACHE FOR LEADERBOARD....");
+        const cachedData = await getCachedPlaylistSongStats(playlistId);
+        if (cachedData) {
+          console.log("CACHE HIT FOR LEADERBOARD");
+          setSongsWithStats(cachedData);
+          console.log(cachedData[0]);
+          setLoading(false);
+          return;
+        }
+      }
+      await fetchStatsFromDB();
+    },
+    [playlistId, fetchStatsFromDB],
+  );
 
-  return { songsWithStats, loading };
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  const refreshStats = useCallback(() => {
+    fetchStats(true);
+  }, [fetchStats]);
+
+  return { songsWithStats, loading, refreshStats };
 }

@@ -8,7 +8,6 @@ import {
 import { useWindowSize } from "@uidotdev/usehooks";
 import type { resultBracketType, MatchType, participantsType } from "@/types";
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 
 function transformBrackets(brackets: resultBracketType[]): MatchType[] {
   let matches: MatchType[] = [];
@@ -70,9 +69,13 @@ function transformBrackets(brackets: resultBracketType[]): MatchType[] {
 
 type BracketProps = {
   fullBracketResults: resultBracketType[];
+  audioRef: React.MutableRefObject<HTMLAudioElement | null>;
 };
 
-export default function Bracket({ fullBracketResults }: BracketProps) {
+export default function Bracket({
+  fullBracketResults,
+  audioRef,
+}: BracketProps) {
   const { width, height } = useWindowSize();
   const matchArr = transformBrackets(fullBracketResults);
 
@@ -128,6 +131,13 @@ export default function Bracket({ fullBracketResults }: BracketProps) {
 
   const handleParticipantClick = (participant: participantsType) => {
     console.log(participant.name);
+    if (audioRef.current) {
+      audioRef.current.src = participant.url;
+      audioRef.current.play().catch((error) => {
+        console.error("Audio playback failed:", error);
+        // Handle the error (e.g., show a play button to the user)
+      });
+    }
   };
 
   return (

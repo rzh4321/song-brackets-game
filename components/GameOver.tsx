@@ -159,7 +159,7 @@ export default function GameOver({
           Play again
         </Button>
       </div>
-      <Bracket fullBracketResults={fullBracketResults} />
+      <Bracket fullBracketResults={fullBracketResults} audioRef={audioRef} />
     </div>
   );
 }
