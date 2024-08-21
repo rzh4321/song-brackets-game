@@ -1,4 +1,4 @@
-import getSongDBData from "@/actions/getSongDBData";
+import getSongsDBData from "@/actions/getSongsDBData";
 import { useState, useEffect, useCallback } from "react";
 import type { Song, SongDBStats } from "@/types";
 import {
@@ -16,22 +16,12 @@ export default function useSongDBStats(
 
   const fetchStatsFromDB = useCallback(async () => {
     setLoading(true);
-    const res: SongDBStats[] = [];
-    for (let i = 0; i < songs.length; ++i) {
-      const song = songs[i];
-      const songWithStats = await getSongDBData(
-        song.id,
-        playlistId,
-        song.name,
-        playlistName,
-      );
-      res.push(songWithStats);
-    }
+    const res = await getSongsDBData(playlistId);
     // cache leaderboard
     cachePlaylistSongStats(playlistId, res);
     setSongsWithStats(res);
     setLoading(false);
-  }, [playlistName, playlistId, songs]);
+  }, [playlistId]);
 
   const fetchStats = useCallback(
     async (bypassCache: boolean = false) => {
@@ -41,7 +31,6 @@ export default function useSongDBStats(
         if (cachedData) {
           console.log("CACHE HIT FOR LEADERBOARD");
           setSongsWithStats(cachedData);
-          console.log(cachedData[0]);
           setLoading(false);
           return;
         }
