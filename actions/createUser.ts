@@ -22,19 +22,23 @@ export default async function createUser(
 
     if (res.length > 0) {
       console.log("this username or spotify id already exists");
-      return JSON.stringify(res[0]);
+      throw new Error("This username already exists");
     }
 
     // Hash the password if it is provided
     const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
     // Create a new user since one doesn't exist with the given username
-    const newUser = await db.insert(users).values({
+    await db.insert(users).values({
       username: username,
       name: name,
       password: hashedPassword,
       spotifyId: spotifyUserId,
     });
+
+    const newUser = {
+      username,
+    };
 
     console.log("New user created:", newUser);
     return JSON.stringify({ ...newUser, password }); // return unhashed pw since we're gonna log in with it

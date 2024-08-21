@@ -125,7 +125,11 @@ export const RegisterForm = () => {
             />
           </div>
           <FormError message={error} />
-          <Button disabled={isPending} type="submit" className="w-full text-lg">
+          <Button
+            disabled={isPending}
+            type="submit"
+            className="w-full text-lg mt-4"
+          >
             Create an account
           </Button>
         </form>

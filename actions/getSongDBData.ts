@@ -25,7 +25,6 @@ export default async function getSongDBData(
       name: playlistName,
     });
   }
-
   let res = await db
     .select({
       playlistId: songs.playlistId,

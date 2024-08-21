@@ -2,6 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import getAccessToken from "@/actions/getAccessToken";
 import refreshAccessToken from "@/actions/refreshAccessToken";
 import getPreviewUrl from "@/actions/getPreviewUrl";
+import {
+  cachePlaylistData,
+  getCachedPlaylistData,
+} from "@/actions/redisActions";
+import { useRef, useState, useCallback, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { QueryKey } from "@tanstack/react-query";
+
 import type {
   Track,
   Song,
@@ -9,7 +17,6 @@ import type {
   participantsType,
   SongWithStatsType,
 } from "@/types";
-import getSongDBData from "@/actions/getSongDBData";
 
 async function fetchNextSongs(
   url: string,
@@ -66,7 +73,8 @@ async function fetchNextSongs(
 async function fetchPlaylistData(
   playlistId: string,
   accessToken: string,
-): Promise<{ songsArr: SongWithStatsType[]; playlistInfo: PlaylistInfo }> {
+): Promise<{ songsArr: Song[]; playlistInfo: PlaylistInfo }> {
+  console.log("IN FETCHPLAYLISTDATA");
   const response = await fetch(
     `https://api.spotify.com/v1/playlists/${playlistId}`,
     {
@@ -144,14 +152,34 @@ async function fetchPlaylistData(
 }
 
 export default function usePlaylist(playlistId: string) {
-  const queryKey = ["playlist", playlistId];
+  const queryKey = useMemo<QueryKey>(
+    () => ["playlist", playlistId],
+    [playlistId],
+  );
+  const queryClient = useQueryClient();
+  const bypassCacheRef = useRef(false);
+  const [isRefetching, setIsRefetching] = useState(false);
 
-  const { data, error, isLoading, refetch } = useQuery({
+  const { data, error, isFetching, refetch } = useQuery({
     queryKey: queryKey,
     queryFn: async () => {
+      if (!bypassCacheRef.current) {
+        console.log("CHECKING CACHE...");
+        const cachedData = await getCachedPlaylistData(playlistId);
+        console.log("CACHEDDATA IS ", cachedData);
+        if (cachedData) {
+          console.log("CACHE HIT");
+          return cachedData;
+        }
+      } else {
+        console.log("BYPASSING CACHE CHECK");
+      }
+
       try {
         let accessToken = await getAccessToken();
-        return await fetchPlaylistData(playlistId, accessToken);
+        const fetchedData = await fetchPlaylistData(playlistId, accessToken);
+        await cachePlaylistData(playlistId, fetchedData);
+        return fetchedData;
       } catch (error) {
         if (
           error instanceof Error &&
@@ -161,22 +189,45 @@ export default function usePlaylist(playlistId: string) {
           const newAccessToken = await refreshAccessToken();
           if (newAccessToken) {
             try {
-              return await fetchPlaylistData(playlistId, newAccessToken);
+              const fetchedData = await fetchPlaylistData(
+                playlistId,
+                newAccessToken,
+              );
+              await cachePlaylistData(playlistId, fetchedData);
+              return fetchedData;
             } catch (err) {
               console.log(
                 "NEW ACCESS TOKEN FAILED OR ANOTHER ERROR OCCURRED: ",
                 err,
               );
               throw err;
+            } finally {
+              bypassCacheRef.current = false; // Reset bypass flag after query execution
             }
           }
         }
         throw error;
+      } finally {
+        bypassCacheRef.current = false; // Reset bypass flag after query execution
       }
     },
     refetchInterval: 1000 * 60 * 5, // refetch songs every 5 mins
     refetchIntervalInBackground: true,
+    refetchOnWindowFocus: false,
   });
 
-  return { data, isLoading, error, refetch };
+  const refetchWithBypassCache = useCallback(async () => {
+    setIsRefetching(true);
+    bypassCacheRef.current = true;
+    try {
+      await queryClient.invalidateQueries({ queryKey });
+      await refetch();
+    } finally {
+      setIsRefetching(false);
+    }
+  }, [queryClient, queryKey, refetch]);
+
+  const isLoading = isFetching || isRefetching;
+
+  return { data, isLoading, error, refetch: refetchWithBypassCache };
 }

@@ -7,13 +7,14 @@ import SongCard from "./SongCard";
 import Image from "next/image";
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Loader } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 
 type MenuProps = {
   playlistInfo: PlaylistInfo;
   songs: Song[];
   setShowTournament: React.Dispatch<React.SetStateAction<boolean>>;
   form: any;
+  refetch: () => Promise<void>;
 };
 
 export default function Menu({
@@ -21,6 +22,7 @@ export default function Menu({
   songs,
   setShowTournament,
   form,
+  refetch,
 }: MenuProps) {
   const [visibleCount, setVisibleCount] = useState(10);
 
@@ -67,6 +69,14 @@ export default function Menu({
             />
           </div>
         </div>
+        <Button
+          className="flex gap-1 w-fit"
+          variant={"spotify"}
+          onClick={refetch}
+        >
+          <RefreshCcw className="w-[20px]" />
+          <span className="text-xs">Refresh</span>
+        </Button>
         {itemsToDisplay?.map((song: Song, ind) => (
           <SongCard key={song.id} songObj={song} num={ind + 1} />
         ))}

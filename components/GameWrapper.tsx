@@ -11,14 +11,19 @@ export default function GameWrapper({
   playlistId: string;
   userId: number;
 }) {
-  const { data, isLoading, error } = usePlaylist(playlistId);
+  const { data, isLoading, error, refetch } = usePlaylist(playlistId);
+  console.log("isloading is ", isLoading);
   if (isLoading) {
     return (
-      <div className="flex gap-1 items-center">
-        <Loader className="animate-spin" />
-        <span className="text-sm">
-          Fetching Songs (may take a while if playlist is large)
-        </span>
+      <div className="flex justify-center items-center mt-[25%]">
+        <div className="text-3xl font-sans tracking-wide text-center">
+          Loading Playlist
+          <span className="dots overflow-hidden align-baseline"></span>
+          <br></br>
+          <span className="text-xs">
+            (may take some time if playlist is large)
+          </span>
+        </div>
       </div>
     );
   } else if (error) {
@@ -32,5 +37,5 @@ export default function GameWrapper({
     );
   }
 
-  return <Game data={data!} userId={userId} />;
+  return <Game data={data!} userId={userId} refetch={refetch} />;
 }

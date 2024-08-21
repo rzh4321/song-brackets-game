@@ -11,6 +11,7 @@ export default function useSongDBStats(
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // get every song from this playlist and fetch its stats from the DB
     const fetchStats = async () => {
       const res: SongDBStats[] = [];
       for (let i = 0; i < songs.length; ++i) {

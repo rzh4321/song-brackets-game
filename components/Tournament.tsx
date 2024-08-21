@@ -2,15 +2,11 @@
 import useTournament from "@/hooks/useTournament";
 
 import type {
-  MatchType,
   participantsType,
-  currentRoundBracketType,
   resultBracketType,
   Song,
-  SongWithStatsType,
   PlaylistInfo,
 } from "@/types";
-import Image from "next/image";
 import BracketRound from "./BracketRound";
 import GameOver from "./GameOver";
 import Background from "./background";

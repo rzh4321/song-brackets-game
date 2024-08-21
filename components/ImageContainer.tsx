@@ -110,7 +110,7 @@ function ImageContainer({
   };
 
   return (
-    <div>
+    <div className="flex flex-col gap-2 items-center">
       <div>
         <audio key={audio} controls>
           <source src={audio} type="audio/mpeg" />

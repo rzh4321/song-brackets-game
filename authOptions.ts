@@ -49,6 +49,7 @@ const authOptions: NextAuthOptions = {
 
             // If user is not found or it was registered via spotify login, throw an error
             if (res.length === 0 || !res[0].password) {
+              console.log(res);
               throw new Error("Username does not exist");
             }
             // Compare provided password with the hashed password in the database
