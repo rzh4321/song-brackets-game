@@ -77,7 +77,7 @@ export const columns: ColumnDef<SongDBStats>[] = [
 
       return (
         <div className="text-center">
-          {gamesWon}/{gamesPlayed} ({winRate.toFixed(0)}%)
+          {gamesWon}/{gamesPlayed} ({winRate*100}%)
         </div>
       );
     },

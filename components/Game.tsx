@@ -4,8 +4,6 @@ import Tournament from "@/components/Tournament";
 import Menu from "./Menu";
 import { biggestPowerOfTwo } from "./MenuOptions";
 import Background from "./background";
-import { QueryObserverResult } from "@tanstack/react-query";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -41,7 +39,7 @@ export default function Game({
         32,
         biggestPowerOfTwo(data.playlistInfo.count!),
       ).toString(),
-      showProgress: false,
+      showProgress: true,
       ranked: true,
     },
   });

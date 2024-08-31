@@ -33,18 +33,22 @@ export default function Menu({
   };
 
   // Function to get a random unplayed song
-  const getRandomUnplayedSong = useCallback(() => {
+  const getRandomUnplayedSong = () => {
     const unplayedSongs = songs.filter((song) => !playedSongs.has(song.id));
+    // console.log('PLAYED SONGS IS ', playedSongs);
+    // console.log('LENGTH OF UNPLAYED SONGS IS ', unplayedSongs.length);
+    // console.log('UNPLAYED SONGS IS ', unplayedSongs);
     if (unplayedSongs.length === 0) {
+      console.log('HI')
       // If all songs have been played, reset the played songs
       setPlayedSongs(new Set());
       return songs[Math.floor(Math.random() * songs.length)];
     }
     return unplayedSongs[Math.floor(Math.random() * unplayedSongs.length)];
-  }, [songs, playedSongs]);
+  };
 
   // Function to play the next song
-  const playNextSong = useCallback(() => {
+  const playNextSong = () => {
     const playSong = async () => {
       const nextSong = getRandomUnplayedSong();
       console.log("NEXT RANDOM SONG IS ", nextSong.name);
@@ -54,10 +58,11 @@ export default function Menu({
         // await audioRef.current.play();
         // console.log('SHOULD BE PLAYING NOW')
         setPlayedSongs((prev) => new Set(prev).add(nextSong.id));
+        console.log(playedSongs)
       }
     };
     playSong();
-  }, [getRandomUnplayedSong]);
+  };
 
   useEffect(() => {
     document.body.addEventListener("mousemove", function () {
