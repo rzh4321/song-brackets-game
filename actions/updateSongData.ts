@@ -76,12 +76,6 @@ export default async function updateSongData(
   //   name,
   //   " ROUND REACHED IS ",
   //   roundReached,
-  //   " NUMROUNDS IS ",
-  //   numRounds,
-  //   " BRACKET SIZE IS ",
-  //   bracketSize,
-  //   " TRACK ID IS ",
-  //   trackId,
   //   " ISWINNER IS ",
   //   isWinner,
   // );
@@ -193,6 +187,6 @@ export default async function updateSongData(
 
   }
 
-  console.log("UPDATED DB FOR ", name);
+  // console.log("UPDATED DB FOR ", name);
   return { oldSongRating, newSongRating };
 }

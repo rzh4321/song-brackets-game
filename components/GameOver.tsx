@@ -46,25 +46,19 @@ export default function GameOver({
     }
   }, [winner]);
 
+
+
   useEffect(() => {
     const updateDb = async () => {
-      for (let i = 0; i < fullBracketResults.length; ++i) {
-        const bracketResultObj: resultBracketType = fullBracketResults[i];
+      let oldRating;
+      let newRating;
+      const updatePromises = fullBracketResults.map(async (bracketResultObj: resultBracketType, i) => {
         const winnerName = bracketResultObj.winner;
-        // update the loser of each bracket
+        const isLastItem = i === fullBracketResults.length - 1;
+        
         if (bracketResultObj.part1.name === winnerName) {
-          await updateSongData(
-            bracketResultObj.part2.id,
-            bracketResultObj.part2.playlistId,
-            bracketResultObj.part2.playlistName,
-            bracketResultObj.round,
-            numRounds,
-            bracketResultObj.part2.name,
-            false,
-          );
-          if (i === fullBracketResults.length - 1) {
-            // special case for winner of entire bracket
-            const { oldSongRating, newSongRating } = await updateSongData(
+          if (isLastItem) {
+            const {oldSongRating, newSongRating} = await updateSongData(
               bracketResultObj.part1.id,
               bracketResultObj.part1.playlistId,
               bracketResultObj.part1.playlistName,
@@ -73,24 +67,22 @@ export default function GameOver({
               bracketResultObj.winner,
               true,
             );
-            setRatings({
-              oldSongRating,
-              newSongRating,
-            });
+            oldRating = oldSongRating;
+            newRating = newSongRating;
           }
-        } else {
-          await updateSongData(
-            bracketResultObj.part1.id,
-            bracketResultObj.part1.playlistId,
-            bracketResultObj.part1.playlistName,
+          return updateSongData(
+            bracketResultObj.part2.id,
+            bracketResultObj.part2.playlistId,
+            bracketResultObj.part2.playlistName,
             bracketResultObj.round,
             numRounds,
-            bracketResultObj.part1.name,
+            bracketResultObj.part2.name,
             false,
           );
-          if (i === fullBracketResults.length - 1) {
-            // special case for winner of entire bracket
-            const { oldSongRating, newSongRating } = await updateSongData(
+          
+        } else {
+          if (isLastItem) {
+            const {oldSongRating, newSongRating} = await updateSongData(
               bracketResultObj.part2.id,
               bracketResultObj.part2.playlistId,
               bracketResultObj.part2.playlistName,
@@ -99,14 +91,30 @@ export default function GameOver({
               bracketResultObj.winner,
               true,
             );
-            setRatings({
-              oldSongRating,
-              newSongRating,
-            });
+            oldRating = oldSongRating;
+            newRating = newSongRating;
           }
+          return updateSongData(
+            bracketResultObj.part1.id,
+            bracketResultObj.part1.playlistId,
+            bracketResultObj.part1.playlistName,
+            bracketResultObj.round,
+            numRounds,
+            bracketResultObj.part1.name,
+            false,
+          );
+          
         }
-      }
+      });
+  
+      const results = await Promise.all(updatePromises);
+      
+        setRatings({
+          oldSongRating: oldRating as any,
+          newSongRating: newRating as any,
+        });
     };
+  
     if (ranked) {
       console.log("THE MODE WAS RANKED, UPDATING DB NOW...");
       updateDb();
