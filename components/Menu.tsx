@@ -39,7 +39,7 @@ export default function Menu({
     // console.log('LENGTH OF UNPLAYED SONGS IS ', unplayedSongs.length);
     // console.log('UNPLAYED SONGS IS ', unplayedSongs);
     if (unplayedSongs.length === 0) {
-      console.log('HI')
+      console.log("HI");
       // If all songs have been played, reset the played songs
       setPlayedSongs(new Set());
       return songs[Math.floor(Math.random() * songs.length)];
@@ -58,7 +58,7 @@ export default function Menu({
         // await audioRef.current.play();
         // console.log('SHOULD BE PLAYING NOW')
         setPlayedSongs((prev) => new Set(prev).add(nextSong.id));
-        console.log(playedSongs)
+        console.log(playedSongs);
       }
     };
     playSong();

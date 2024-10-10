@@ -71,14 +71,14 @@ export default async function updateSongData(
   // once we reach here, the song will exist in DB. We can update it now
 
   const bracketSize = 2 ** numRounds;
-  // console.log(
-  //   "IN UPDATEPHOTODATA FOR ",
-  //   name,
-  //   " ROUND REACHED IS ",
-  //   roundReached,
-  //   " ISWINNER IS ",
-  //   isWinner,
-  // );
+  console.log(
+    "IN UPDATEPHOTODATA FOR ",
+    name,
+    " ROUND REACHED IS ",
+    roundReached,
+    " ISWINNER IS ",
+    isWinner,
+  );
   const calculatedScore = (roundReached / (numRounds + 1)) * (bracketSize / 2);
   // console.log(
   //   "(roundReached / numRounds+1) IS ",
@@ -119,31 +119,32 @@ export default async function updateSongData(
     WHERE games_played > 0 AND track_id = ${trackId} AND playlist_id = ${playlistId};`,
   );
 
-  
   // Fetch updated song data
   const updatedSongQuery = await db
-  .select({
-    rating: songs.rating,
-    gamesPlayed: songs.gamesPlayed,
-    gamesWon: songs.gamesWon,
-  })
-  .from(songs)
-  .where(and(
-    eq(trackId as any, songs.trackId),
-    eq(playlistId as any, songs.playlistId),
-  ),);
+    .select({
+      rating: songs.rating,
+      gamesPlayed: songs.gamesPlayed,
+      gamesWon: songs.gamesWon,
+    })
+    .from(songs)
+    .where(
+      and(
+        eq(trackId as any, songs.trackId),
+        eq(playlistId as any, songs.playlistId),
+      ),
+    );
   // console.log('UPDATEDSONGOBJ IS ', updatedSongQuery)
-  
+
   const updatedSong = updatedSongQuery[0];
   const newSongRating = updatedSong.rating as number;
   const gamesPlayed = updatedSong.gamesPlayed as number;
   const gamesWon = updatedSong.gamesWon as number;
-  
+
   // console.log('NEW SONG RATING IS ', newSongRating);
-  
+
   // Calculate win rate
   const winRate = gamesPlayed > 0 ? gamesWon / gamesPlayed : 0;
-  
+
   // code below is to update redis
   // Update Redis cache
   const redisKey = `playlist-stats:${playlistId}`;
@@ -166,7 +167,6 @@ export default async function updateSongData(
         gamesWon,
       };
       // console.log(name, ' NEW UPDATED CACHE DATA IS ', parsedData[songIndex]);
-
     } else {
       // Add new song data. This happens if this song has never been played before
       // console.log("ADDING NEW SONG", name, "  TO CACHE...");
@@ -179,14 +179,11 @@ export default async function updateSongData(
         gamesWon,
       });
       // console.log(name, ' NEW UPDATED CACHE DATA IS ', parsedData[parsedData.length-1]);
-
     }
 
-
     await redis.set(redisKey, JSON.stringify(parsedData));
-
   }
 
-  // console.log("UPDATED DB FOR ", name);
+  console.log("UPDATED DB FOR ", name);
   return { oldSongRating, newSongRating };
 }
