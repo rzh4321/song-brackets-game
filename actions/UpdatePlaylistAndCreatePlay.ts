@@ -11,7 +11,7 @@ export default async function UpdatePlaylistAndCreatePlay(
   score: number,
 ): Promise<void> {
   // Start a transaction to ensure data consistency
-  const result = await prisma.$transaction(async (prisma) => {
+  const result = await prisma.$transaction(async (prisma : any) => {
     if (score === -1) score = 0;
     // Check if a corresponding playlist with this combination of showHints and timer exists
     let playlist = await prisma.playlist.findFirst({
