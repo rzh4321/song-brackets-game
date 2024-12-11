@@ -31,11 +31,11 @@ export default function Playlists({
           hookParams={[userId]}
           label="Your Playlists"
         />
-        <PlaylistSection
+        {/* <PlaylistSection
           usePlaylistHook={useFeaturedPlaylists}
           hookParams={[]}
           label="Featured Playlists"
-        />
+        /> */}
       </div>
     );
   } else if (pathname.includes("/categories")) {
