@@ -1,6 +1,5 @@
 "use client";
 import usePlaylist from "@/hooks/usePlaylist";
-import { Loader } from "lucide-react";
 import ErrorMessage from "./ErrorMessage";
 import Game from "./Game";
 
@@ -12,7 +11,6 @@ export default function GameWrapper({
   userId: number;
 }) {
   const { data, isLoading, error, refetch } = usePlaylist(playlistId);
-  console.log("isloading is ", isLoading);
   if (isLoading) {
     return (
       <div className="flex justify-center items-center mt-[25%]">

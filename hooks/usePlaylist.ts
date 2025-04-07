@@ -18,12 +18,27 @@ import type {
   SongWithStatsType,
 } from "@/types";
 
-async function fetchNextSongs(
-  url: string,
-  playlistId: string,
-  accessToken: string,
-  playlistName: string,
-) {
+async function buildSong(track: Track): Promise<Song> {
+  const t = track.track;
+  let previewUrl: string | null = t.preview_url;
+  if (!previewUrl) {
+    previewUrl = await getPreviewUrl(t.id);
+  }
+
+  return {
+    id: t.id,
+    name: t.name,
+    url: previewUrl!,
+    album: t.album.name,
+    date_added: track.added_at,
+    artists: t.artists.map((artist) => artist.name),
+    duration: t.duration_ms,
+    popularity: t.popularity,
+    image: t.album.images[0].url,
+  };
+}
+
+async function fetchNextSongs(url: string, accessToken: string) {
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -34,39 +49,11 @@ async function fetchNextSongs(
     throw new Error("Failed to fetch data: " + (await response.text()));
   }
   const data = await response.json();
-  // map each song to a more readable object that includes its previewUrl. If null, fetch it
+  // map each song to a more readable object that includes its previewUrl. If null, fetch it (logic in buildSong)
   const promises = data.items.map(async (track: Track) => {
-    let previewUrl: string | null = track.track.preview_url;
-    if (!previewUrl) {
-      previewUrl = await getPreviewUrl(track.track.id);
-    }
-    // get the song's stats from the DB
-    // const DBStats = (await getSongDBData(
-    //   track.track.id,
-    //   playlistId,
-    //   track.track.name,
-    //   playlistName,
-    // )) as {
-    //   playlistId: string;
-    //   gamesPlayed: number;
-    //   gamesWon: number;
-    //   totalScore: number;
-    //   totalRounds: number;
-    //   totalBracketSize: number;
-    // };
-    return {
-      id: track.track.id,
-      name: track.track.name,
-      url: previewUrl,
-      album: track.track.album.name,
-      date_added: track.added_at,
-      artists: track.track.artists.map((artist) => artist.name),
-      duration: track.track.duration_ms,
-      popularity: track.track.popularity,
-      image: track.track.album.images[0].url,
-      // ...DBStats,
-    } as Song;
+    return buildSong(track);
   });
+
   return { nextPromises: promises, url: data.next };
 }
 
@@ -99,54 +86,20 @@ async function fetchPlaylistData(
     owner: data.owner.display_name,
   };
 
-  // map each song to a more readable object that includes its previewUrl. If null, fetch it
-  let promises = data.tracks.items.map(async (track: Track) => {
-    if (track.track) {
-      let previewUrl: string | null = track.track.preview_url;
-      if (!previewUrl) {
-        previewUrl = await getPreviewUrl(track.track.id);
-      }
-      // get the song's stats from the DB
-      // const DBStats = (await getSongDBData(
-      //   track.track.id,
-      //   playlistId,
-      //   track.track.name,
-      //   playlistInfo.name,
-      // )) as {
-      //   playlistId: string;
-      //   gamesPlayed: number;
-      //   gamesWon: number;
-      //   totalScore: number;
-      //   totalRounds: number;
-      //   totalBracketSize: number;
-      // };
-      return {
-        id: track.track.id,
-        name: track.track.name,
-        url: previewUrl,
-        album: track.track.album.name,
-        date_added: track.added_at,
-        artists: track.track.artists.map((artist) => artist.name),
-        duration: track.track.duration_ms,
-        popularity: track.track.popularity,
-        image: track.track.album.images[0].url,
-        // ...DBStats,
-      } as Song;
-    }
-  });
+  // map each song to a more readable object that includes its previewUrl. If null, fetch it (logic in buildSong)
+  let promises: Promise<Song>[] = data.tracks.items
+    .filter((t: any) => t.track) // filter null tracks
+    .map((track: Track) => buildSong(track));
+
+  // Fetch paginated items
   let nextUrl = data.tracks.next;
   while (nextUrl) {
-    let { nextPromises, url } = await fetchNextSongs(
-      nextUrl,
-      playlistId,
-      accessToken,
-      playlistInfo.name,
-    );
-    promises = [...promises, ...nextPromises];
+    const { nextPromises, url } = await fetchNextSongs(nextUrl, accessToken);
+    promises.push(...nextPromises);
     nextUrl = url;
   }
 
-  // Wait for all promises to resolve
+  // Wait for all songs to resolve
   const songs = await Promise.all(promises);
   return { songsArr: songs, playlistInfo };
 }
@@ -176,6 +129,7 @@ export default function usePlaylist(playlistId: string) {
       }
 
       try {
+        console.log("FETCHING DATA FROM SPOTIFY...");
         let accessToken = await getAccessToken();
         const fetchedData = await fetchPlaylistData(playlistId, accessToken);
         await cachePlaylistData(playlistId, fetchedData);

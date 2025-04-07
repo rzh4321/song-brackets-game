@@ -35,7 +35,7 @@ export default async function getTopScoresByPlaylistIdAndTimer(
   }
 
   // Flatten all plays from all playlists
-  const allPlays = playlists.flatMap((playlist : any) => playlist.plays);
+  const allPlays = playlists.flatMap((playlist: any) => playlist.plays);
 
   // Filter and sort the plays for showHints = false
   const topScoresWithoutHints = allPlays
