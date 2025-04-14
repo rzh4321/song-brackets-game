@@ -18,7 +18,6 @@ export const FormSchema = z.object({
 
 export default function Game({
   data,
-  userId,
   refetch,
 }: {
   data: { songsArr: Song[]; playlistInfo: PlaylistInfo };

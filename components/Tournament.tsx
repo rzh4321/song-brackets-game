@@ -10,6 +10,7 @@ import type {
 import BracketRound from "./BracketRound";
 import GameOver from "./GameOver";
 import Background from "./background";
+import { useRef } from "react";
 
 type TournamentProps = {
   playAgain: () => void;
@@ -28,6 +29,8 @@ export default function Tournament({
   songsArr,
   playlistInfo,
 }: TournamentProps) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const {
     currentRoundBrackets,
     setCurrentRoundBrackets,
@@ -41,8 +44,24 @@ export default function Tournament({
     setRound,
   } = useTournament(numRounds, ranked, songsArr, playlistInfo);
 
+  // play song that just won for a second
+  const setSongJustWon = (name: string | null) => {
+    if (!audioRef.current) {
+      console.log("audio ref not mounted, returning");
+      return;
+    }
+    const currentBracketObj = currentRoundBrackets[currentRoundInd];
+
+    if (currentBracketObj.part1.name === name) {
+      audioRef.current.src = currentBracketObj.part1.url;
+    } else {
+      audioRef.current.src = currentBracketObj.part2.url;
+    }
+  };
+
   const handlePhotoChosen = async (name: string) => {
-    // pause for 1.5 seconds for the animation
+    // pause the song that just won
+    if (audioRef.current) audioRef.current.pause();
     console.log("IN HANDLEPHOTOCHOSEN");
     const currentBracketObj = currentRoundBrackets[currentRoundInd];
     console.log(
@@ -131,6 +150,7 @@ export default function Tournament({
 
   return (
     <>
+      <audio ref={audioRef} playsInline autoPlay className="hidden" />
       <Background />
       <BracketRound
         bracket={currentRoundBrackets[currentRoundInd]}
@@ -138,6 +158,7 @@ export default function Tournament({
         currentBracketNum={currentRoundInd + 1}
         totalBrackets={currentRoundBrackets.length}
         handlePhotoChosen={handlePhotoChosen}
+        setSongJustWon={setSongJustWon}
       />
     </>
   );

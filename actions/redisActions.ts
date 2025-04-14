@@ -11,7 +11,7 @@ export async function cachePlaylistData(
   playlistId: string,
   data: { songsArr: Song[]; playlistInfo: PlaylistInfo },
 ) {
-  await redis.set(`playlist:${playlistId}`, JSON.stringify(data), "EX", 86400); // Cache for 1 hour
+  await redis.set(`playlist:${playlistId}`, JSON.stringify(data), "EX", 432000); // Cache for 5 days
 }
 
 export async function cachePlaylistSongStats(

@@ -19,10 +19,13 @@ import type {
 } from "@/types";
 
 async function buildSong(track: Track): Promise<Song> {
+  console.log("IN BUILDSONG");
   const t = track.track;
   let previewUrl: string | null = t.preview_url;
   if (!previewUrl) {
+    console.log("GETTING PREVIWE URL FOR ", track.track.name);
     previewUrl = await getPreviewUrl(t.id);
+    console.log(`GOT PREVIEW URL FOR ${track.track.name}`);
   }
 
   return {
@@ -39,6 +42,7 @@ async function buildSong(track: Track): Promise<Song> {
 }
 
 async function fetchNextSongs(url: string, accessToken: string) {
+  console.log("IN FETCHNEXTSONGS, CALLING SPOTI API...");
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -49,6 +53,7 @@ async function fetchNextSongs(url: string, accessToken: string) {
     throw new Error("Failed to fetch data: " + (await response.text()));
   }
   const data = await response.json();
+  console.log("BACK FROM SPOTI API, RETURNING PROMISES AND NEXT URL");
   // map each song to a more readable object that includes its previewUrl. If null, fetch it (logic in buildSong)
   const promises = data.items.map(async (track: Track) => {
     return buildSong(track);
@@ -70,6 +75,7 @@ async function fetchPlaylistData(
       },
     },
   );
+  console.log("GOT RESPONSE FROM SPOTI PLAYLIST API");
 
   if (!response.ok) {
     throw new Error("Failed to fetch data: " + (await response.text()));
@@ -85,7 +91,6 @@ async function fetchPlaylistData(
     count: data.tracks.total,
     owner: data.owner.display_name,
   };
-
   // map each song to a more readable object that includes its previewUrl. If null, fetch it (logic in buildSong)
   let promises: Promise<Song>[] = data.tracks.items
     .filter((t: any) => t.track) // filter null tracks
@@ -94,13 +99,15 @@ async function fetchPlaylistData(
   // Fetch paginated items
   let nextUrl = data.tracks.next;
   while (nextUrl) {
+    console.log("GETTING NEXT SONGS FROM SPOTI API...");
     const { nextPromises, url } = await fetchNextSongs(nextUrl, accessToken);
     promises.push(...nextPromises);
     nextUrl = url;
   }
-
+  console.log("GOT ALL SONGS FROM API. CALLING PROMISE.ALL NOW...");
   // Wait for all songs to resolve
   const songs = await Promise.all(promises);
+  console.log("DONE!!!!!!!");
   return { songsArr: songs, playlistInfo };
 }
 

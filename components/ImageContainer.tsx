@@ -12,6 +12,7 @@ type ImageContainerProps = {
   imageClicked: boolean;
   setImageClicked: React.Dispatch<React.SetStateAction<boolean>>;
   handlePhotoChosen: (name: string) => void;
+  setSongJustWon: (name: string) => void;
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -24,6 +25,7 @@ function ImageContainer({
   setImageClicked,
   name,
   handlePhotoChosen,
+  setSongJustWon,
 }: ImageContainerProps) {
   const [hearts, setHearts] = useState<HeartStyle[]>([]);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -95,6 +97,8 @@ function ImageContainer({
 
     setHearts(newHearts);
     if (imageRef.current) {
+      setSongJustWon(name);
+      // pause for the heart and sliding animations. otherwise handlePhotoChosen immediately goes to next round
       await sleep(1000);
       handlePhotoChosen(name);
       // reset everything for next bracket

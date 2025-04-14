@@ -27,23 +27,29 @@ export default function Menu({
   const [visibleCount, setVisibleCount] = useState(10);
   const [playedSongs, setPlayedSongs] = useState<Set<string>>(new Set());
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playedSongsRef = useRef(playedSongs);
 
   const showMoreItems = () => {
     setVisibleCount((prevVisibleCount) => prevVisibleCount + 10);
   };
 
+  // Keep the ref updated on each render
+  useEffect(() => {
+    playedSongsRef.current = playedSongs;
+  }, [playedSongs]);
+
   // Function to get a random unplayed song
   const getRandomUnplayedSong = () => {
-    const unplayedSongs = songs.filter((song) => !playedSongs.has(song.id));
-    // console.log('PLAYED SONGS IS ', playedSongs);
-    // console.log('LENGTH OF UNPLAYED SONGS IS ', unplayedSongs.length);
-    // console.log('UNPLAYED SONGS IS ', unplayedSongs);
+    const unplayedSongs = songs.filter(
+      (song) => !playedSongsRef.current.has(song.id),
+    );
+
     if (unplayedSongs.length === 0) {
-      console.log("HI");
-      // If all songs have been played, reset the played songs
+      console.log("All songs played, resetting...");
       setPlayedSongs(new Set());
       return songs[Math.floor(Math.random() * songs.length)];
     }
+
     return unplayedSongs[Math.floor(Math.random() * unplayedSongs.length)];
   };
 
@@ -55,10 +61,12 @@ export default function Menu({
       if (audioRef.current) {
         // console.log('ATTACHING URL TO AUDIOREF AND PLAYING IT NOW...')
         audioRef.current.src = nextSong.url;
-        // await audioRef.current.play();
         // console.log('SHOULD BE PLAYING NOW')
-        setPlayedSongs((prev) => new Set(prev).add(nextSong.id));
-        console.log(playedSongs);
+        setPlayedSongs((prev) => {
+          const updated = new Set(prev);
+          updated.add(nextSong.id);
+          return updated;
+        });
       }
     };
     playSong();
@@ -83,6 +91,14 @@ export default function Menu({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    console.log("Played songs updated:", playedSongs);
+    console.log(
+      "Unplayed songs:",
+      songs.filter((song) => !playedSongs.has(song.id)).map((s) => s.name),
+    );
+  }, [playedSongs, songs]);
 
   // Get the songs to display
   const itemsToDisplay = songs?.slice(0, visibleCount);

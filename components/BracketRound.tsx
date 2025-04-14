@@ -10,6 +10,7 @@ type BracketRoundProps = {
   currentBracketNum: number;
   totalBrackets: number;
   showProgress: boolean;
+  setSongJustWon: (name: string) => void;
 };
 
 export default function BracketRound({
@@ -18,6 +19,7 @@ export default function BracketRound({
   showProgress,
   currentBracketNum,
   totalBrackets,
+  setSongJustWon,
 }: BracketRoundProps) {
   const [imageClicked, setImageClicked] = useState(false);
 
@@ -32,6 +34,7 @@ export default function BracketRound({
           imageClicked={imageClicked}
           setImageClicked={setImageClicked}
           handlePhotoChosen={handlePhotoChosen}
+          setSongJustWon={setSongJustWon}
         />
         <VerticalLine
           imageClicked={imageClicked}
@@ -48,6 +51,7 @@ export default function BracketRound({
           imageClicked={imageClicked}
           setImageClicked={setImageClicked}
           handlePhotoChosen={handlePhotoChosen}
+          setSongJustWon={setSongJustWon}
         />
       </div>
     </>

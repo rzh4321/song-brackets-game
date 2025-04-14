@@ -11,7 +11,7 @@ export default async function createUser(
   password?: string, // Optional parameter
 ) {
   const loggedInWithSpotify = password === undefined;
-  console.log('loggined with spoti: ', loggedInWithSpotify)
+  console.log("loggined with spoti: ", loggedInWithSpotify);
   try {
     // Check if the user already exists
     const res = await db
@@ -28,10 +28,10 @@ export default async function createUser(
       throw new Error("This username already exists");
     }
     if (loggedInWithSpotify && res.length > 0) {
-      console.log('returning user logging in with spotify');
+      console.log("returning user logging in with spotify");
       return res[0].userId;
     }
- 
+
     // Hash the password if it is provided
     const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
